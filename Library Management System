@@ -1,0 +1,148 @@
+#include <stdio.h> 
+#include <stdlib.h>
+#include <conio.h>
+#include <string.h>  
+
+
+int main()
+{
+    FILE *pf, *tf; /// file pointers
+    char another, choice;
+
+    struct emp
+    {
+        char bookname[40]; 
+        char authorname[40];
+        char studentname[40];
+        char Date[100];
+        int id; 
+        
+    };
+
+    struct emp a; 
+
+    char bname[40]; /// string to store name of the book
+
+    long int recsize; /// size of each record of book
+
+   
+    pf = fopen("book.DAT","rb+");
+    if(pf == NULL)
+    {
+        pf = fopen("book.DAT","wb+");
+        if(pf == NULL)
+        {
+            printf("Cannot open file");
+            exit(1);
+        }
+    }
+
+    
+    recsize = sizeof(a);
+
+    while(1)
+    {
+        system("cls"); 
+        printf("\n1. Add new book"); 
+        printf("\n2. Display book"); 
+        printf("\n3. update book"); 
+        printf("\n4. Delete book"); 
+        printf("\n5. Exit"); 
+        printf("\nEnter Your Choice: "); 
+        fflush(stdin); 
+        choice  = getche();
+        switch(choice)
+        {
+        case '1':  
+            system("cls");
+            fseek(pf,0,SEEK_END); /// search the file and move cursor to end of the file
+            /// here 0 indicates moving 0 distance from the end of the file
+
+            another = 'y';
+            while(another == 'y')  /// if user want to add another record of book
+            {
+                printf("\nEnter book id: ");
+                scanf("%d",&a.id);
+                printf("\nEnter book name: ");
+                scanf("%s", a.bookname);
+                printf("\nEnter Author name: ");
+                scanf("%s", a.authorname);
+                printf("\nEnter student name: ");
+                scanf("%s",a.studentname);
+                printf("\nEnter Date: ");
+                scanf("%s",a.Date);
+               
+                fwrite(&a,recsize,1,pf); /// write the record in the file
+
+                printf("\nAdd another record(y/n) ");
+                fflush(stdin);
+                another = getche();
+            }
+            break;
+        case '2':
+            system("cls");
+            rewind(pf); ///this moves file cursor to start of the file
+            while(fread(&a,recsize,1,pf)==1)  /// read the file and fetch the record 
+            {
+                printf("\n%d %s %s %s %s ",a.id,a.bookname,a.authorname,a.studentname,a.Date); 
+            }
+            getch();
+            break;
+
+        case '3':  
+            system("cls");
+            another = 'y';
+            while(another == 'y')
+            {
+                printf("Enter the book name to modify: ");
+                scanf("%s", bname);
+                rewind(pf);
+                while(fread(&a,recsize,1,pf)==1)  /// fetch all record from file
+                {
+                    if(strcmp(a.bookname,bname) == 0)  ///if entered name matches  in file
+                    {
+                        printf("\nEnter new bookid,bookname,authorname,studentname,bookstatus ");
+                        scanf("%d%s%s%s%s",a.bookname,a.authorname,a.studentname,a.Date);
+                        fseek(pf,-recsize,SEEK_CUR); /// move the cursor 1 step back from current position
+                        fwrite(&a,recsize,1,pf); /// override the record
+                        break;
+                    }
+                }
+                printf("\nModify another record(y/n)");
+                fflush(stdin);
+                another = getche();
+            }
+            break;
+        case '4':
+            system("cls");
+            another = 'y';
+            while(another == 'y')
+            {
+                printf("\nEnter book name to delete: ");
+                scanf("%s",bname);
+                tf = fopen("Temp.dat","wb");  /// creates a  file for temporary storage
+                rewind(pf); /// move record to starting of file
+                while(fread(&a,recsize,1,pf) == 1)  /// reads all records from file
+                {
+                    if(strcmp(a.bookname,bname) != 0)  /// if the entered record match with a file
+                    {
+                        fwrite(&a,recsize,1,tf); /// move all records except the one that is to be deleted to temp file
+                    }
+                }
+                fclose(pf);
+                fclose(tf);
+                remove("book.DAT"); /// removes the orginal file
+                rename("Temp.dat","book.DAT"); /// renames the temp.DAT to book.DAT 
+                pf = fopen("book.DAT", "rb+");
+                printf("Delete another record(y/n)");
+                fflush(stdin);
+                another = getche();
+            }
+            break;
+        case '5':
+            fclose(pf);  /// close the file
+            exit(0); /// exit from the program
+        }
+    }
+    return 0;
+}
